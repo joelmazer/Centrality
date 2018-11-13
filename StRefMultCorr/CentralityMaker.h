@@ -50,6 +50,7 @@ class CentralityMaker {
     StRefMultCorr* getTofTrayMultCorr() ; // For TOF tray multiplicity
     StRefMultCorr* getgRefMultCorr()  ; // For grefmult //Run14 AuAu200GeV
     StRefMultCorr* getgRefMultCorr_P16id()  ; // For grefmult //Run14 AuAu200GeV, P16id
+    StRefMultCorr* getgRefMultCorr_P17id_VpdMB30()  ; // for P17id, VPDMB-30; |vz| < 30
     StRefMultCorr* getgRefMultCorr_VpdMB30()  ; // for VPDMB-30; |vz| < 30
     StRefMultCorr* getgRefMultCorr_VpdMBnoVtx()  ; //  for VPDMB-noVtx; |vz| < 100
 
@@ -67,6 +68,7 @@ class CentralityMaker {
     StRefMultCorr* fTofTrayMultCorr ; // tofTrayMult based centrality
     StRefMultCorr* fgRefMultCorr  ; // grefmult based centrality
     StRefMultCorr* fgRefMultCorr_P16id  ; // grefmult based centrality, P16id
+    StRefMultCorr* fgRefMultCorr_P17id_VpdMB30; // for P17id, VPDMB-30; |vz| < 30
     StRefMultCorr* fgRefMultCorr_VpdMB30; // for VPDMB-30; |vz| < 30
     StRefMultCorr* fgRefMultCorr_VpdMBnoVtx; //  for VPDMB-noVtx; |vz| < 100
 
