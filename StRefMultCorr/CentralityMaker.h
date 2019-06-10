@@ -51,6 +51,7 @@ class CentralityMaker {
     StRefMultCorr* getgRefMultCorr()  ; // For grefmult //Run14 AuAu200GeV
     StRefMultCorr* getgRefMultCorr_P16id()  ; // For grefmult //Run14 AuAu200GeV, P16id
     StRefMultCorr* getgRefMultCorr_P17id_VpdMB30()  ; // for P17id, VPDMB-30; |vz| < 30
+    StRefMultCorr* getgRefMultCorr_P18ih_VpdMB30()  ; // for P18ih, VPDMB-30; |vz| < 30, added June10, 2019 (New Run14 production)
     StRefMultCorr* getgRefMultCorr_VpdMB30()  ; // for VPDMB-30; |vz| < 30
     StRefMultCorr* getgRefMultCorr_VpdMBnoVtx()  ; //  for VPDMB-noVtx; |vz| < 100
 
@@ -69,6 +70,7 @@ class CentralityMaker {
     StRefMultCorr* fgRefMultCorr  ; // grefmult based centrality
     StRefMultCorr* fgRefMultCorr_P16id  ; // grefmult based centrality, P16id
     StRefMultCorr* fgRefMultCorr_P17id_VpdMB30; // for P17id, VPDMB-30; |vz| < 30
+    StRefMultCorr* fgRefMultCorr_P18ih_VpdMB30; // for P18ih, VPDMB-30; |vz| < 30, added June10, 2019 (New Run14 production)
     StRefMultCorr* fgRefMultCorr_VpdMB30; // for VPDMB-30; |vz| < 30
     StRefMultCorr* fgRefMultCorr_VpdMBnoVtx; //  for VPDMB-noVtx; |vz| < 100
 
