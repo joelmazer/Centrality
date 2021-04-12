@@ -42,6 +42,8 @@ CentralityMaker::CentralityMaker()
   fgRefMultCorr_P16id  = new StRefMultCorr("grefmult_P16id") ;
   fgRefMultCorr_P17id_VpdMB30 = new StRefMultCorr("grefmult_P17id_VpdMB30") ;
   fgRefMultCorr_P18ih_VpdMB30 = new StRefMultCorr("grefmult_P18ih_VpdMB30") ;
+  fgRefMultCorr_P18ih_VpdMB30_AllLumi = new StRefMultCorr("grefmult_P18ih_VpdMB30_AllLumi") ;
+  fgRefMultCorr_P18ih_VpdMB30_AllLumi_MB5sc = new StRefMultCorr("grefmult_P18ih_VpdMB30_AllLumi_MB5sc") ;
   fgRefMultCorr_VpdMB30 = new StRefMultCorr("grefmult_VpdMB30") ;
   fgRefMultCorr_VpdMBnoVtx = new StRefMultCorr("grefmult_VpdMBnoVtx") ;
 }
@@ -107,6 +109,18 @@ StRefMultCorr* CentralityMaker::getgRefMultCorr_P17id_VpdMB30()
 StRefMultCorr* CentralityMaker::getgRefMultCorr_P18ih_VpdMB30()
 {
     return fgRefMultCorr_P18ih_VpdMB30 ;
+}
+
+//____________________________________________________________________________________________________
+StRefMultCorr* CentralityMaker::getgRefMultCorr_P18ih_VpdMB30_AllLumi()
+{
+    return fgRefMultCorr_P18ih_VpdMB30_AllLumi ;
+}
+
+//____________________________________________________________________________________________________
+StRefMultCorr* CentralityMaker::getgRefMultCorr_P18ih_VpdMB30_AllLumi_MB5sc()
+{
+    return fgRefMultCorr_P18ih_VpdMB30_AllLumi_MB5sc;
 }
 
 //____________________________________________________________________________________________________

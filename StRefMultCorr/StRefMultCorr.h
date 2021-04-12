@@ -115,6 +115,9 @@ class StRefMultCorr {
     void setVzForWeight(const Int_t nbin, const Double_t min, const Double_t max) ;
     void readScaleForWeight(const Char_t* input) ;
 
+    // tmp
+    Double_t get(const Int_t i, const Int_t j) const;
+
     // Return begin/end run from energy and year
     Int_t getBeginRun(const Double_t energy, const Int_t year) ;
     Int_t getEndRun(const Double_t energy, const Int_t year) ;

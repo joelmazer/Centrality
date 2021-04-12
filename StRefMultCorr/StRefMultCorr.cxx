@@ -179,8 +179,7 @@ Bool_t StRefMultCorr::isBadRun(const Int_t RunId)
 void StRefMultCorr::initEvent(const UShort_t RefMult, const Double_t z, const Double_t zdcCoincidenceRate)
 {
   // Set refmult, vz and corrected refmult if current (refmult,vz) are different from inputs
-  // User must call this function event-by-event before 
-  // calling any other public functions
+  // - User must call this function event-by-event before calling any other public functions
   if ( mRefMult != RefMult || mVz != z || mZdcCoincidenceRate != zdcCoincidenceRate ) {
     mRefMult            = RefMult ;
     mVz                 = z ;
@@ -305,19 +304,26 @@ Double_t StRefMultCorr::getRefMultCorr(const UShort_t RefMult, const Double_t z,
   // Correction function for RefMult, takes into account z_vertex dependence
 
   // Luminosity corrections
-  // 200 GeV only. correction = 1 for all the other energies
+  // 200 GeV only. correction = 1 for all the other energies for BES-I
+  // the above statement may not true for BES-II, since the luminosity is much higher than BES-I, add by Zaochen
+  // better to check the <Refmult> vs ZDCX to see whether they are flat or not, add by Zaochen
   const Double_t par0l = mPar_luminosity[0][mParameterIndex] ;
   const Double_t par1l = mPar_luminosity[1][mParameterIndex] ;
   Double_t correction_luminosity = (par0l==0.0) ? 1.0 : 1.0/(1.0 + par1l/par0l*zdcCoincidenceRate/1000.);
+
   if(mName.CompareTo("grefmult_P16id", TString::kIgnoreCase) == 0 ||
      mName.CompareTo("grefmult_P17id_VpdMB30", TString::kIgnoreCase) == 0 ||
      mName.CompareTo("grefmult_P18ih_VpdMB30", TString::kIgnoreCase) == 0 ||
+     mName.CompareTo("grefmult_P18ih_VpdMB30_AllLumi", TString::kIgnoreCase) == 0 ||
+     mName.CompareTo("grefmult_P18ih_VpdMB30_AllLumi_MB5sc", TString::kIgnoreCase) == 0 ||
      mName.CompareTo("grefmult_VpdMB30", TString::kIgnoreCase) == 0 ||
      mName.CompareTo("grefmult_VpdMBnoVtx", TString::kIgnoreCase) == 0 ) {
       float zdcmean = 0;
       if(mYear[mParameterIndex] == 2014) zdcmean = 30.;
       if(mYear[mParameterIndex] == 2016) zdcmean = 50.;
-      correction_luminosity = (par0l==0.0) ? correction_luminosity : correction_luminosity*(par0l+par1l*zdcmean)/par0l; // from Run14, P16id, for VpdMB5/VPDMB30/VPDMB-noVtx, use refMult at ZdcX=30, other is at ZdcX=0;  -->changed by xlchen@lbl.gov, Run16 ~ 50kHz
+      correction_luminosity = (par0l==0.0) ? correction_luminosity : correction_luminosity*(par0l+par1l*zdcmean)/par0l; 
+      // from Run14, P16id, for VpdMB5/VPDMB30/VPDMB-noVtx, use refMult at ZdcX=30, other is at ZdcX=0; 
+      //  -->changed by xlchen@lbl.gov, Run16 ~ 50kHz
   }
 
   // par0 to par5 define the parameters of a polynomial to parametrize z_vertex dependence of RefMult
@@ -412,44 +418,75 @@ void StRefMultCorr::setVzForWeight(const Int_t nbin, const Double_t min,
   }
   // Debug
   for(Int_t i=0; i<mnVzBinForWeight; i++) {
-    cout << i << " " << step << " " << mVzEdgeForWeight[i]
-      << ", " << mVzEdgeForWeight[i+1] << endl;
+    cout << i << " " << step << " " << mVzEdgeForWeight[i] << ", " << mVzEdgeForWeight[i+1] << endl;
   }
 }
 
 //______________________________________________________________________________
 Double_t StRefMultCorr::getScaleForWeight() const
 {
-  // Special scale factor for global refmult in Run14
-  // to account for the difference between 
+  // Special scale factor for global refmult in Run14 to account for the difference between 
   // VPDMB-30 and VPDMB-5
 
   // return 1 if mgRefMultTriggerCorrDiffVzScaleRatio array is empty
   if(mgRefMultTriggerCorrDiffVzScaleRatio.empty()) return 1.0 ;
 
-//  const Int_t nVzBins =6;
-//  Double_t VzEdge[nVzBins+1]={-6., -4., -2., 0., 2., 4., 6.};
+//  const Int_t nVzBins = 6;
+//  Double_t VzEdge[nVzBins+1] = {-6., -4., -2., 0., 2., 4., 6.};
+  Double_t VPD5weight = 1.0;
 
-  Double_t VPD5weight=1.0;
-  for(Int_t j=0;j<mnVzBinForWeight;j++) {
-    if(mVz>mVzEdgeForWeight[j] && mVz<=mVzEdgeForWeight[j+1]) {
-      //			refMultbin=mgRefMultTriggerCorrDiffVzScaleRatio_2[j]->FindBin(mRefMult_corr+1e-6);
-      //			VPD5weight=mgRefMultTriggerCorrDiffVzScaleRatio_2[j]->GetBinContent(refMultbin);
-      const Int_t refMultbin=static_cast<Int_t>(mRefMult_corr);
-//      VPD5weight=mgRefMultTriggerCorrDiffVzScaleRatio[j][refMultbin];
-      VPD5weight=mgRefMultTriggerCorrDiffVzScaleRatio[refMultbin*mnVzBinForWeight + j];
-      const Double_t tmpContent=VPD5weight;
+  for(Int_t j = 0; j < mnVzBinForWeight; j++) {
+    if(mVz > mVzEdgeForWeight[j] && mVz <= mVzEdgeForWeight[j+1]) {
+/*
+      //=== OLD StRefMultCorr code... ===//      
+
+      //refMultbin = mgRefMultTriggerCorrDiffVzScaleRatio_2[j]->FindBin(mRefMult_corr+1e-6);
+      //VPD5weight = mgRefMultTriggerCorrDiffVzScaleRatio_2[j]->GetBinContent(refMultbin);
+      const Int_t refMultbin = static_cast<Int_t>(mRefMult_corr);
+      //VPD5weight = mgRefMultTriggerCorrDiffVzScaleRatio[j][refMultbin];
+      VPD5weight = mgRefMultTriggerCorrDiffVzScaleRatio[refMultbin*mnVzBinForWeight + j];
+      const Double_t tmpContent = VPD5weight;
+
+      if(tmpContent == 0 || (mRefMult_corr > 500 && tmpContent <= 0.65)) VPD5weight = 1.15; // Just because the value of the weight is around 1.15
+      if(mRefMult_corr > 500 && tmpContent >= 1.35) VPD5weight = 1.15;                    // Remove those Too large weight factor, gRefmult > 500
+      // this weight and reweight should be careful, after reweight (most peripheral), Then weight (whole range)
+*/
+      
+      const Int_t refMultbin = static_cast<Int_t>(mRefMult_corr);
+      VPD5weight = mgRefMultTriggerCorrDiffVzScaleRatio[refMultbin*mnVzBinForWeight + j];
+      const Double_t tmpContent = VPD5weight;
+
+      // OLD CORRECTION!
       if(mName.CompareTo("grefmult", TString::kIgnoreCase) == 0) {
-        if(tmpContent==0 || (mRefMult_corr>500 && tmpContent<=0.65)) VPD5weight=1.15;//Just because the value of the weight is around 1.15
-        if(mRefMult_corr>500 && tmpContent>=1.35) VPD5weight=1.15;//Remove those Too large weight factor,gRefmult>500
-        // this weight and reweight should be careful, after reweight(most peripheral),Then weight(whole range)
+        if(tmpContent == 0 || (mRefMult_corr > 500 && tmpContent <= 0.65)) VPD5weight = 1.15; // Just because the value of the weight is around 1.15
+        if(mRefMult_corr > 500 && tmpContent >= 1.35) VPD5weight = 1.15;                      // Remove those Too large weight factor, gRefmult > 500
+        // this weight and reweight should be careful, after reweight (most peripheral), Then weight (whole range)
       }
       if(mName.CompareTo("grefmult_P16id", TString::kIgnoreCase) == 0) {
-        if(VPD5weight==0) VPD5weight=1;
+        if(VPD5weight == 0) VPD5weight = 1;
       }
+
+      // NEW CORRECTION
+      if(mName.CompareTo("grefmult_P16id", TString::kIgnoreCase) == 0 ||
+         mName.CompareTo("grefmult_P17id_VpdMB30", TString::kIgnoreCase) == 0 ||
+         mName.CompareTo("grefmult_P18ih_VpdMB30", TString::kIgnoreCase) == 0 ||
+         mName.CompareTo("grefmult_P18ih_VpdMB30_AllLumi", TString::kIgnoreCase) == 0 ||
+         mName.CompareTo("grefmult_P18ih_VpdMB30_AllLumi_MB5sc", TString::kIgnoreCase) == 0 ||
+         mName.CompareTo("grefmult_VpdMB30", TString::kIgnoreCase) == 0 ||
+         mName.CompareTo("grefmult_VpdMBnoVtx", TString::kIgnoreCase) == 0 ) {
+
+         // 1) Ratios fluctuate too much at very high gRefmult due to low statistics
+         // 2) Avoid some events with too high weight
+         //
+         // 3) low stats also lead to ratio of 0, set to 1.0
+         if(tmpContent == 0) VPD5weight = 1.0;
+         if(mRefMult_corr > 550 && (tmpContent > 3.0 || tmpContent < 0.3)) VPD5weight = 1.0;
+         // this weight and reweight should be careful, after reweight (most peripheral), Then weight (whole range)
+
+      }
+
     }
   }
-
 
   return 1.0/VPD5weight;
 }
@@ -460,10 +497,10 @@ Double_t StRefMultCorr::getWeight() const
   Double_t Weight = 1.0;
 
   // Invalid index
-  if( !isIndexOk() ) return Weight ;
+  if( !isIndexOk() ) return Weight;
 
   // Invalid z-vertex
-  if( !isZvertexOk() ) return Weight ;
+  if( !isZvertexOk() ) return Weight;
 
   const Double_t par0 =   mPar_weight[0][mParameterIndex];
   const Double_t par1 =   mPar_weight[1][mParameterIndex];
@@ -483,16 +520,23 @@ Double_t StRefMultCorr::getWeight() const
       && mRefMult_corr != -(par3/par2) // avoid denominator = 0
     )
   {
-    Weight = par0 + par1/(par2*mRefMult_corr + par3) + par4*(par2*mRefMult_corr + par3) + par6/TMath::Power(par2*mRefMult_corr+par3 ,2) + par7*TMath::Power(par2*mRefMult_corr+par3 ,2); // Parametrization of MC/data RefMult ratio
+    Weight = par0
+             + par1/(par2*mRefMult_corr + par3) 
+             + par4*(par2*mRefMult_corr + par3) 
+             + par6/TMath::Power(par2*mRefMult_corr+par3, 2) 
+             + par7*TMath::Power(par2*mRefMult_corr+par3, 2); // Parametrization of MC/data RefMult ratio
     Weight = Weight + (Weight-1.0)*(A*mVz*mVz); // z-dependent weight correction
   }
 
-  // Special scale factor for global refmult
+  //------------for Run14 and Run16----------------
+  // Special scale factor for global refmult depending on Vz window
   // for others, scale factor = 1
-  const Double_t scale = getScaleForWeight() ;
-  Weight *= scale ;
+  const Double_t scale = getScaleForWeight();
+  //cout<<"StRefMultCorr: scale = "<<scale<<"   Weight: "<<Weight<<"   Weight*=scale: "<<Weight*scale<<endl;
+  Weight *= scale;
+  //------------for Run14 and Run16----------------
 
-  return Weight ;
+  return Weight;
 }
 
 //______________________________________________________________________________
@@ -501,7 +545,7 @@ Int_t StRefMultCorr::getCentralityBin16() const
   Int_t CentBin16 = -1;
 
   // Invalid index
-  if( !isIndexOk() ) return CentBin16 ;
+  if( !isIndexOk() ) return CentBin16;
 
   while(CentBin16 < mNCentrality && !isCentralityOk(CentBin16) )
   {
@@ -569,6 +613,12 @@ const Char_t* StRefMultCorr::getTable() const
   }
   else if ( mName.CompareTo("grefmult_P18ih_VpdMB30", TString::kIgnoreCase) == 0 ) {
       return "StRoot/StRefMultCorr/Centrality_def_grefmult_P18ih_VpdMB30.txt";
+  }
+  else if ( mName.CompareTo("grefmult_P18ih_VpdMB30_AllLumi", TString::kIgnoreCase) == 0 ) {
+      return "StRoot/StRefMultCorr/Centrality_def_grefmult_P18ih_VpdMB30_AllLumi.txt";
+  }
+  else if ( mName.CompareTo("grefmult_P18ih_VpdMB30_AllLumi_MB5sc", TString::kIgnoreCase) == 0 ) {
+      return "StRoot/StRefMultCorr/Centrality_def_grefmult_P18ih_VpdMB30_AllLumi.txt";
   }
   else if ( mName.CompareTo("grefmult_VpdMB30", TString::kIgnoreCase) == 0 ) {
       return "StRoot/StRefMultCorr/Centrality_def_grefmult_VpdMB30.txt";
@@ -659,7 +709,7 @@ void StRefMultCorr::read()
 //______________________________________________________________________________
 void StRefMultCorr::readBadRuns()
 {
-  // Read bad run numbers
+  // Read bad run numbers - this is done outside of the StRefMultCorr framework
   //   - From year 2010 - 2016
   //   - If input file doesn't exist, skip to the next year without warning
   for(Int_t i=0; i<7; i++) {
@@ -667,15 +717,17 @@ void StRefMultCorr::readBadRuns()
     const Int_t year = 2010 + i ;
     Char_t* inputFileName(Form("StRoot/StRefMultCorr/bad_runs_refmult_year%d.txt", year));
     if(mName.CompareTo("grefmult_P16id", TString::kIgnoreCase) == 0) //read bad runs for VPDMB5
-        sprintf(inputFileName,"StRoot/StRefMultCorr/bad_runs_refmult_year%d_P16id.txt",year);
+        sprintf(inputFileName, "StRoot/StRefMultCorr/bad_runs_refmult_year%d_P16id.txt", year);
     else if(mName.CompareTo("grefmult_P17id_VpdMB30", TString::kIgnoreCase) == 0) //read bad runs for P17id, VPDMB30
-        sprintf(inputFileName,"StRoot/StRefMultCorr/bad_runs_refmult_year%d_P17id_VpdMB30.txt",year);
+        sprintf(inputFileName, "StRoot/StRefMultCorr/bad_runs_refmult_year%d_P17id_VpdMB30.txt", year);
     else if(mName.CompareTo("grefmult_P18ih_VpdMB30", TString::kIgnoreCase) == 0) //read bad runs for P18ih, VPDMB30
-        sprintf(inputFileName,"StRoot/StRefMultCorr/bad_runs_refmult_year%d_P18ih_VpdMB30.txt",year);
+        sprintf(inputFileName, "StRoot/StRefMultCorr/bad_runs_refmult_year%d_P18ih_VpdMB30.txt", year);
+    else if(mName.CompareTo("grefmult_P18ih_VpdMB30_AllLumi", TString::kIgnoreCase) == 0) //read bad runs for P18ih, VPDMB30, All luminosities
+        sprintf(inputFileName, "StRoot/StRefMultCorr/bad_runs_refmult_year%d_P18ih_VpdMB30_AllLumi.txt", year);
     else if(mName.CompareTo("grefmult_VpdMB30", TString::kIgnoreCase) == 0) //read bad runs for VPDMB30
-        sprintf(inputFileName,"StRoot/StRefMultCorr/bad_runs_refmult_year%d_VpdMB30.txt",year);
+        sprintf(inputFileName, "StRoot/StRefMultCorr/bad_runs_refmult_year%d_VpdMB30.txt", year);
     else if(mName.CompareTo("grefmult_VpdMBnoVtx", TString::kIgnoreCase) == 0) //read bad runs for VPDMB-noVtx
-        sprintf(inputFileName,"StRoot/StRefMultCorr/bad_runs_refmult_year%d_VpdMBnoVtx.txt",year);
+        sprintf(inputFileName, "StRoot/StRefMultCorr/bad_runs_refmult_year%d_VpdMBnoVtx.txt", year);
     else
         ;//
     cout << "bad run file: " << inputFileName << endl;
@@ -703,7 +755,7 @@ void StRefMultCorr::print(const Option_t* option) const
   //  const TString opt(option);
 
   //  Int_t input_counter = 0;
-  for(UInt_t id=0; id<mStart_runId.size(); id++) {
+  for(UInt_t id = 0; id < mStart_runId.size(); id++) {
     //cout << "Data line = " << input_counter << ", Start_runId = " << Start_runId[input_counter] << ", Stop_runId = " << Stop_runId[input_counter] << endl;
     //    const UInt_t id = mStart_runId.size()-1;
 
@@ -719,12 +771,12 @@ void StRefMultCorr::print(const Option_t* option) const
     //    }
 
     cout << "Centrality:  ";
-    for(Int_t i=0;i<mNCentrality;i++){
+    for(Int_t i = 0;i < mNCentrality; i++){
       cout << Form("  >%2d%%", 80-5*i);
     }
     cout << endl;
     cout << "RefMult:     ";
-    for(Int_t i=0;i<mNCentrality;i++){
+    for(Int_t i = 0; i < mNCentrality; i++){
       //      cout << Form("StRefMultCorr::read  Centrality %3d-%3d %%, refmult > %4d", 75-5*i, 80-5*i, mCentrality_bins[i][id]) << endl;
       const TString tmp(">");
       const TString centrality = tmp + Form("%d", mCentrality_bins[i][id]);
@@ -732,15 +784,15 @@ void StRefMultCorr::print(const Option_t* option) const
     }
     cout << endl;
 
-    for(Int_t i=0;i<mNPar_z_vertex;i++) {
+    for(Int_t i = 0; i < mNPar_z_vertex; i++) {
       cout << "  mPar_z_vertex[" << i << "] = " << mPar_z_vertex[i][id];
     }
     cout << endl;
-    for(Int_t i=0;i<mNPar_weight;i++) {
+    for(Int_t i = 0; i < mNPar_weight; i++) {
       cout << "  mPar_weight[" << i << "] = " << mPar_weight[i][id];
     }
     cout << endl;
-    for(Int_t i=0;i<mNPar_luminosity;i++) {
+    for(Int_t i = 0; i < mNPar_luminosity; i++) {
       cout << "  mPar_luminosity[" << i << "] = " << mPar_luminosity[i][id];
     }
     cout << endl << endl;
@@ -748,3 +800,10 @@ void StRefMultCorr::print(const Option_t* option) const
   cout << "=====================================================================================" << endl;
 }
 
+//
+// tmp function to get scale ratio
+//___________________________________________________________________________________
+Double_t StRefMultCorr::get(const Int_t i, const Int_t j) const
+{
+  return mgRefMultTriggerCorrDiffVzScaleRatio[j*mnVzBinForWeight+i];
+}
